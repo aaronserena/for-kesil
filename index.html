@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>For Kesil | Valentine's Day</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/petals.browser.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
     <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;700&display=swap" rel="stylesheet">
     <style>
@@ -102,13 +103,19 @@
 
         #btn-no {
             position: fixed;
-            transition: all 0.15s ease-out;
-            z-index: 999;
+            transition: all 0.15s cubic-bezier(0.175, 0.885, 0.32, 1.1);
+            z-index: 998; 
             width: 80px;
             font-size: 14px;
             padding: 10px;
             margin: 0;
             pointer-events: auto;
+            left: -1000px;
+        }
+
+        #btn-yes {
+            z-index: 999;
+            position: relative;
         }
 
         .please-tag {
@@ -177,6 +184,28 @@
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
+
+        .credits {
+            position: fixed;
+            bottom: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 10px;
+            opacity: 0.4;
+            letter-spacing: 1px;
+            pointer-events: none;
+            white-space: nowrap;
+            z-index: 5;
+        }
+
+        .hint-text {
+            font-size: 11px;
+            opacity: 0.5;
+            margin-bottom: 4px;
+            pointer-events: none;
+            color: var(--primary);
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -191,6 +220,8 @@
             <button class="btn-option" onclick="nextQuestion()">Just fine</button>
         </div>
     </div>
+
+    <div class="credits">by: Aaron Poe</div>
 
     <script>
         let step = 1;
@@ -267,38 +298,56 @@
 
         function renderInvite() {
             document.getElementById('options-container').innerHTML = `
-                <div style="position: relative; height: 120px; margin-top: 20px;">
-                    <button id="btn-yes" class="btn-option" onclick="startCountdown()" style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); margin: 0; z-index: 5;">YES!!</button>
+                <div style="position: relative; margin-top: 15px; display: flex; flex-direction: column; align-items: center; justify-content: center;">
+                    <div class="hint-text">try clicking no</div>
+                    <button id="btn-yes" class="btn-option" onclick="startCountdown()" style="margin: 0;">YES!!</button>
                     <button id="btn-no" class="btn-option" 
                         onmouseover="moveNo(event)" 
                         ontouchstart="moveNo(event)">NO</button>
                 </div>
             `;
-            setTimeout(() => moveNo(), 50);
+            requestAnimationFrame(() => moveNo());
         }
 
         function moveNo(e) {
+            const noBtn = document.getElementById('btn-no');
+            const yesBtn = document.getElementById('btn-yes');
+            if (!noBtn || !yesBtn) return;
+
             if (e) {
                 e.preventDefault();
-                yesScale += 0.15;
-                const yesBtn = document.getElementById('btn-yes');
-                if (yesBtn) yesBtn.style.transform = `translate(-50%, -50%) scale(${yesScale})`;
+                yesScale += 0.25; 
+                yesBtn.style.transform = `scale(${yesScale})`;
                 spawnBeggingWords();
                 triggerBounce();
             }
 
-            const noBtn = document.getElementById('btn-no');
-            if (!noBtn) return;
+            // Stop moving once Yes is big enough to hide it
+            if (yesScale > 2.8) return;
 
-            const padding = 60;
-            const maxX = window.innerWidth - padding * 2;
-            const maxY = window.innerHeight - padding * 2;
+            const yesRect = yesBtn.getBoundingClientRect();
+            const yesCenterX = yesRect.left + yesRect.width / 2;
+            const yesCenterY = yesRect.top + yesRect.height / 2;
 
-            const randomX = Math.random() * maxX + padding;
-            const randomY = Math.random() * maxY + padding;
+            // 1 inch is approx 96px
+            const maxDistance = 96;
+            // Radius where it's actually touching/on the yes button
+            const minDistance = (yesRect.width / 2) * 0.4; 
+            
+            const angle = Math.random() * Math.PI * 2;
+            // Now it can move anywhere BETWEEN 0 and the max distance (relative to center)
+            const distance = Math.random() * (maxDistance - minDistance) + minDistance;
 
-            noBtn.style.left = randomX + 'px';
-            noBtn.style.top = randomY + 'px';
+            let targetX = yesCenterX + Math.cos(angle) * distance - (noBtn.offsetWidth / 2);
+            let targetY = yesCenterY + Math.sin(angle) * distance - (noBtn.offsetHeight / 2);
+
+            // Bounds check
+            const padding = 10;
+            targetX = Math.max(padding, Math.min(window.innerWidth - noBtn.offsetWidth - padding, targetX));
+            targetY = Math.max(padding, Math.min(window.innerHeight - noBtn.offsetHeight - padding, targetY));
+
+            noBtn.style.left = targetX + 'px';
+            noBtn.style.top = targetY + 'px';
         }
 
         function spawnBeggingWords() {
@@ -319,7 +368,6 @@
             const noBtn = document.getElementById('btn-no');
             if (noBtn) noBtn.remove();
 
-            // Display "Best Valentine's Ever" immediately when countdown starts
             document.getElementById('question-text').innerHTML = `Best Valentine's Ever! 💝`;
             
             let timeLeft = 5;
@@ -357,7 +405,6 @@
         }
 
         function goToFlowers() {
-            // Updated redirect link
             window.location.href = "https://aaronserena.github.io/Flowers-HTML-CSS/";
         }
 
