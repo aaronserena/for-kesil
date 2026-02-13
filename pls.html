@@ -83,7 +83,7 @@
             border-radius: 100px;
             margin: 10px 0;
             font-weight: 800;
-            transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
             border: 2px dashed rgba(255,255,255,0.5);
             cursor: pointer;
             box-shadow: 0 6px 0 var(--accent);
@@ -143,26 +143,6 @@
             to { transform: translateY(-10vh) scale(1.2); opacity: 0; }
         }
 
-        .floating-chat {
-            position: fixed;
-            background: white;
-            padding: 10px 18px;
-            border-radius: 25px;
-            border: 2px solid var(--primary);
-            font-size: 14px;
-            font-weight: bold;
-            box-shadow: 0 5px 15px rgba(255, 133, 162, 0.2);
-            z-index: 5;
-            pointer-events: none;
-            animation: drift 5s ease-in-out forwards;
-        }
-
-        @keyframes drift {
-            0% { transform: translateY(0) scale(0.8); opacity: 0; }
-            20% { opacity: 1; transform: translateY(-30px) scale(1); }
-            100% { transform: translateY(-150px) scale(0.9); opacity: 0; }
-        }
-
         .letter-scroll {
             font-size: 1.1rem;
             line-height: 1.6;
@@ -174,12 +154,34 @@
             margin-top: 10px;
             font-style: italic;
         }
+
+        #countdown-display {
+            font-size: 4.5rem;
+            font-weight: 900;
+            color: var(--primary);
+            text-shadow: 4px 4px 0px var(--accent);
+            margin: 10px 0;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.8s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
     </style>
 </head>
 <body>
 
     <div id="hearts-container"></div>
-    <div id="chats-container"></div>
 
     <div class="container float-anim" id="game-box">
         <div class="sticker-container" id="sticker">😊</div>
@@ -197,22 +199,15 @@
 
         const beggingWords = [
             "PLEASEEE! 🥺", "DON'T BE MEAN! 😭", "SAY YESSS! 💍", 
-            "I'LL CRY! 🤧", "PRETTY PLEASE? 🎀", "DON'T DO THIS! 💔",
-            "I BEG YOU! 🙇‍♂️", "JUST ONCE? ✨", "BE MINEEE! 🥰",
-            "NUH-UH! ✋", "CAN'T CLICK ME! 😜"
-        ];
-
-        const loveChats = [
-            "You're my favorite! 😍", "Miss you already 💖", "Best day ever! ✨",
-            "You're so cute! 🥰", "My heart is full 🎀", "Thinking of you... 💭",
-            "Love you more! 💍", "U are my world 🌍"
+            "I'LL CRY! 🤧", "PRETTY PLEASE? 🎀", "DON'T DO THIS! 💔"
         ];
 
         const emojis = {
             start: "😊",
             smug: "😏",
             sad: "🥺",
-            final: "🥰"
+            final: "🥰",
+            wait: "⏳"
         };
 
         function updateSticker(key) {
@@ -248,7 +243,7 @@
                 updateSticker('smug');
                 document.getElementById('question-text').innerText = "Who? 🧐";
                 document.getElementById('options-container').innerHTML = `
-                    <button class="btn-option" onclick="finalSuccess()">You</button>
+                    <button class="btn-option" onclick="startCountdown()">You</button>
                     <button class="btn-option" onclick="goodDay()">Not you</button>
                 `;
             } else {
@@ -273,13 +268,12 @@
         function renderInvite() {
             document.getElementById('options-container').innerHTML = `
                 <div style="position: relative; height: 120px; margin-top: 20px;">
-                    <button id="btn-yes" class="btn-option" onclick="finalSuccess()" style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); margin: 0; z-index: 5;">YES!!</button>
+                    <button id="btn-yes" class="btn-option" onclick="startCountdown()" style="position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); margin: 0; z-index: 5;">YES!!</button>
                     <button id="btn-no" class="btn-option" 
                         onmouseover="moveNo(event)" 
                         ontouchstart="moveNo(event)">NO</button>
                 </div>
             `;
-            // Initial positioning
             setTimeout(() => moveNo(), 50);
         }
 
@@ -296,7 +290,6 @@
             const noBtn = document.getElementById('btn-no');
             if (!noBtn) return;
 
-            // Simple random position within safe viewport bounds
             const padding = 60;
             const maxX = window.innerWidth - padding * 2;
             const maxY = window.innerHeight - padding * 2;
@@ -318,28 +311,54 @@
             setTimeout(() => tag.remove(), 2500);
         }
 
-        function finalSuccess() {
+        function startCountdown() {
             triggerBounce();
             updateSticker('final');
-            confetti({
-                particleCount: 150,
-                spread: 70,
-                origin: { y: 0.6 }
-            });
-
-            document.getElementById('question-text').innerHTML = `Best Valentine's Ever! 💝`;
-            document.getElementById('options-container').innerHTML = `
-                <div class="letter-scroll">
-                    To Kesil,<br><br>
-                    You just made my entire year! Thank you for saying yes to this little adventure. You're the sweetest! ✨💖
-                </div>
-            `;
+            confetti({ particleCount: 100, spread: 70, origin: { y: 0.6 } });
             
             const noBtn = document.getElementById('btn-no');
             if (noBtn) noBtn.remove();
+
+            // Display "Best Valentine's Ever" immediately when countdown starts
+            document.getElementById('question-text').innerHTML = `Best Valentine's Ever! 💝`;
             
-            setInterval(createHeart, 200);
-            setInterval(spawnChat, 1000);
+            let timeLeft = 5;
+            document.getElementById('options-container').innerHTML = `
+                <p class="text-sm font-bold mb-2">Preparing your surprise...</p>
+                <div id="countdown-display">${timeLeft}</div>
+            `;
+
+            const timer = setInterval(() => {
+                timeLeft--;
+                if (timeLeft > 0) {
+                    document.getElementById('countdown-display').innerText = timeLeft;
+                } else {
+                    clearInterval(timer);
+                    showFinalButton();
+                }
+            }, 1000);
+
+            setInterval(createHeart, 300);
+        }
+
+        function showFinalButton() {
+            triggerBounce();
+            const container = document.getElementById('options-container');
+            container.innerHTML = `
+                <div class="fade-in">
+                    <div class="letter-scroll mb-6">
+                        To Kesil,<br><br>
+                        You just made my entire year! Thank you for saying yes to this little adventure. You're the sweetest! ✨💖
+                    </div>
+                    <button class="btn-option" onclick="goToFlowers()">Flowers for you 💐</button>
+                </div>
+            `;
+            confetti({ particleCount: 200, spread: 100, origin: { y: 0.7 } });
+        }
+
+        function goToFlowers() {
+            // Updated redirect link
+            window.location.href = "https://aaronserena.github.io/Flowers-HTML-CSS/flower.html";
         }
 
         function createHeart() {
@@ -350,16 +369,6 @@
             h.style.fontSize = (Math.random() * 20 + 20) + 'px';
             document.getElementById('hearts-container').appendChild(h);
             setTimeout(() => h.remove(), 4000);
-        }
-
-        function spawnChat() {
-            const chat = document.createElement('div');
-            chat.className = 'floating-chat';
-            chat.innerText = loveChats[Math.floor(Math.random() * loveChats.length)];
-            chat.style.left = (Math.random() * 60 + 20) + 'vw';
-            chat.style.top = (Math.random() * 40 + 30) + 'vh';
-            document.getElementById('chats-container').appendChild(chat);
-            setTimeout(() => chat.remove(), 5000);
         }
     </script>
 </body>
